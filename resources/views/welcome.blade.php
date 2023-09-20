@@ -19,6 +19,11 @@
             <button type="submit" class="btn btn-success">Submit</button>
         </form>
 
+        <!-- Tampilkan Waktu Eksekusi -->
+        <div id="execution-time">
+            <!-- Waktu eksekusi akan ditampilkan di sini -->
+        </div>
+
         <!-- Tampilkan Hasil -->
         <div id="hasil">
             <!-- Hasil akan ditampilkan di sini -->
@@ -28,8 +33,9 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
     <script>
-        // Mengambil elemen form
+        // Mengambil elemen form dan div waktu eksekusi
         var form = document.querySelector('form');
+        var executionTimeDiv = document.getElementById('execution-time');
 
         // Menambahkan event listener untuk menghandle submit form
         form.addEventListener('submit', function(event) {
@@ -38,11 +44,21 @@
             // Mengambil bilangan dari input form
             var bilangan = document.querySelector('input[name="bilangan"]').value;
 
+            // Memulai timer
+            var startTime = performance.now();
+
             // Mengirim permintaan POST ke API
             axios.post('/api/test', {
                     bilangan: bilangan
                 })
                 .then(function(response) {
+                    // Menghentikan timer
+                    var endTime = performance.now();
+                    var executionTime = endTime - startTime;
+
+                    // Menampilkan waktu eksekusi di dalam div waktu eksekusi
+                    executionTimeDiv.innerHTML = 'Waktu Eksekusi: ' + executionTime.toFixed(2) + ' milidetik';
+
                     // Menampilkan hasil bilangan terakhir dan hasil kuadratnya
                     var bilanganTerakhir = response.data.bilangan_terakhir;
                     var hasilKuadrat = response.data.hasil_kuadrat;
