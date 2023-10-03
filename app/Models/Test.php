@@ -11,5 +11,7 @@ class Test extends Model
 
     protected $fillable = [
         'bilangan',
+        'waktu',
+        'akar_kuadrat'
     ];
 }

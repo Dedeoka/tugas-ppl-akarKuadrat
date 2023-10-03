@@ -17,17 +17,15 @@ class TestController extends Controller
      */
     public function index()
     {
-        $lastNumber = Test::latest()->value('bilangan'); // Mengambil bilangan terakhir dari tabel Test
-        $kuadrat = $lastNumber * $lastNumber; // Mengkuadratkan bilangan terakhir
-
-        return response()->json(['kuadrat_terakhir' => $kuadrat]);
+        $tests = Test::all();
+        return response()->json($tests, 200);
     }
 
     public function store(Request $request)
     {
         // Define validation rules
         $validator = Validator::make($request->all(), [
-            'bilangan' => 'required|numeric', // Pastikan input adalah angka
+            'bilangan' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/'
         ]);
 
         // Check if validation fails
@@ -37,18 +35,39 @@ class TestController extends Controller
 
         // Hitung kuadrat bilangan
         $bilangan = $request->bilangan;
-        $kuadrat = sqrt($bilangan);
+        $startTime = microtime(true);
 
-        // Simpan bilangan dan hasil kuadrat ke dalam database
-        $test = Test::create([
-            'bilangan' => $bilangan,
-        ]);
+        // Inisialisasi $kuadrat_manual
+        $kuadrat_manual = 0;
 
-        // Mengembalikan respons JSON yang berisi bilangan terakhir dan hasil kuadratnya
+        // Perhitungan manual akar kuadrat
+        $x = $bilangan / 2;
+        for ($i = 0; $i < 1000; $i++) { // Batasi iterasi ke 1000 untuk menghindari perulangan tak terbatas
+            $estimate = 0.5 * ($x + $bilangan / $x);
+            if (abs($estimate - $x) < 1e-6) {
+                $kuadrat_manual = $estimate;
+                break;
+            }
+            $x = $estimate;
+        }
+
+        // Simpan bilangan, hasil kuadrat, dan waktu eksekusi ke dalam database
+        $test = new Test;
+        $test->bilangan = $bilangan;
+        $test->akar_kuadrat = $kuadrat_manual;
+        $endTime = microtime(true);
+        $executionTime = ($endTime - $startTime) * 1000;
+        $test->waktu = $executionTime;
+        $test->save();
+
+        // Mengembalikan respons JSON yang berisi bilangan terakhir, hasil kuadrat, dan waktu eksekusi
         return response()->json([
             'bilangan_terakhir' => $bilangan,
-            'hasil_kuadrat' => $kuadrat,
+            'hasil_kuadrat' => $kuadrat_manual,
+            'waktu_eksekusi' => $executionTime,
         ], 200);
     }
+
+
 
 }

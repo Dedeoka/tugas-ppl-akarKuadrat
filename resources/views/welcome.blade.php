@@ -16,7 +16,8 @@
         <form>
             <p>Masukan Bilangan Yang Ingin Di Proses</p>
             <input type="text" name="bilangan">
-            <button type="submit" class="btn btn-success">Submit</button>
+            <div id="bilangan-error" class="text-danger"></div>
+            <button type="submit" class="btn btn-success mt-5">Submit</button>
         </form>
 
         <!-- Tampilkan Waktu Eksekusi -->
@@ -28,10 +29,52 @@
         <div id="hasil">
             <!-- Hasil akan ditampilkan di sini -->
         </div>
+
+        <div class="container">
+            <h1 class="mt-5">Data Bilangan</h1>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Bilangan</th>
+                        <th>Akar Kuadrat</th>
+                        <th>Waktu Eksekusi (detik)</th>
+                    </tr>
+                </thead>
+                <tbody id="data-table">
+                    <!-- Data akan ditampilkan di sini menggunakan JavaScript -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
+    <script>
+        // Fungsi untuk mengambil dan menampilkan data dari API
+        function fetchData() {
+            axios.get('/api/test')
+                .then(function(response) {
+                    var data = response.data;
+                    var tableBody = document.getElementById('data-table');
+                    tableBody.innerHTML = ''; // Menghapus isi tabel sebelumnya
+
+                    data.forEach(function(item) {
+                        var row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.id}</td>
+                            <td>${item.bilangan}</td>
+                            <td>${item.akar_kuadrat}</td>
+                            <td>${item.waktu}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(function(error) {
+                    console.log(error);
+                });
+        }
+    </script>
     <script>
         // Mengambil elemen form dan div waktu eksekusi
         var form = document.querySelector('form');
@@ -44,30 +87,38 @@
             // Mengambil bilangan dari input form
             var bilangan = document.querySelector('input[name="bilangan"]').value;
 
-            // Memulai timer
-            var startTime = performance.now();
 
             // Mengirim permintaan POST ke API
+            // Setelah permintaan POST berhasil, tambahkan kode berikut untuk memperbarui tabel
             axios.post('/api/test', {
                     bilangan: bilangan
                 })
                 .then(function(response) {
                     // Menghentikan timer
-                    var endTime = performance.now();
-                    var executionTime = endTime - startTime;
-
                     // Menampilkan waktu eksekusi di dalam div waktu eksekusi
-                    executionTimeDiv.innerHTML = 'Waktu Eksekusi: ' + executionTime.toFixed(2) + ' milidetik';
+                    executionTimeDiv.innerHTML = 'Waktu Eksekusi: ' + response.data.waktu_eksekusi +
+                        ' milidetik';
 
                     // Menampilkan hasil bilangan terakhir dan hasil kuadratnya
                     var bilanganTerakhir = response.data.bilangan_terakhir;
                     var hasilKuadrat = response.data.hasil_kuadrat;
                     var hasilElement = document.getElementById('hasil');
-                    hasilElement.innerHTML = '<br>Hasil Akar Kuadrat: ' +
-                        hasilKuadrat;
+                    hasilElement.innerHTML = '<br>Hasil Akar Kuadrat: ' + hasilKuadrat;
+
+                    // Memperbarui tabel dengan data yang diperbarui
+                    fetchData();
                 })
                 .catch(function(error) {
-                    console.log(error);
+                    // Menampilkan pesan validasi error jika ada
+                    if (error.response && error.response.status === 422) {
+                        var errors = error.response.data;
+                        if (errors.bilangan) {
+                            var bilanganErrorDiv = document.getElementById('bilangan-error');
+                            bilanganErrorDiv.textContent = errors.bilangan[0];
+                        }
+                    } else {
+                        console.log(error);
+                    }
                 });
         });
     </script>
