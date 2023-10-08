@@ -25,7 +25,16 @@ class TestController extends Controller
     {
         // Define validation rules
         $validator = Validator::make($request->all(), [
-            'bilangan' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/'
+            'bilangan' => [
+                'required',
+                'numeric',
+                'regex:/^\d+(\.\d{1,2})?$/',
+                function ($attribute, $value, $fail) {
+                    if ($value < 0) {
+                        $fail('Tidak dapat menginputkan bilangan negatif pada form.');
+                    }
+                },
+            ],
         ]);
 
         // Check if validation fails
@@ -41,14 +50,16 @@ class TestController extends Controller
         $kuadrat_manual = 0;
 
         // Perhitungan manual akar kuadrat
-        $x = $bilangan / 2;
-        for ($i = 0; $i < 1000; $i++) { // Batasi iterasi ke 1000 untuk menghindari perulangan tak terbatas
-            $estimate = 0.5 * ($x + $bilangan / $x);
-            if (abs($estimate - $x) < 1e-6) {
-                $kuadrat_manual = $estimate;
-                break;
+        if ($bilangan != 0) {
+            $x = $bilangan / 2;
+            for ($i = 0; $i < 1000; $i++) { // Batasi iterasi ke 1000 untuk menghindari perulangan tak terbatas
+                $estimate = 0.5 * ($x + $bilangan / $x);
+                if (abs($estimate - $x) < 1e-6) {
+                    $kuadrat_manual = $estimate;
+                    break;
+                }
+                $x = $estimate;
             }
-            $x = $estimate;
         }
 
         // Simpan bilangan, hasil kuadrat, dan waktu eksekusi ke dalam database
@@ -67,7 +78,4 @@ class TestController extends Controller
             'waktu_eksekusi' => $executionTime,
         ], 200);
     }
-
-
-
 }
